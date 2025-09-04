@@ -9,28 +9,37 @@ import lombok.ToString;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
 @ToString
 @RequiredArgsConstructor
 public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Getter
     private String id;
 
     @Column(nullable = false, unique = true)
+    @Getter
+    @Setter
     private String username;
 
     @Column(nullable = false, unique = true)
+    @Getter
+    @Setter
     private String email;
 
     @Column(nullable = false)
+    @Getter
+    @Setter
     private String password;
 
     @ManyToMany
+    @Getter
+    @Setter
     private List<MemberRole> roles;
 
+    @Getter
+    @Setter
     private boolean active;
 
 }
