@@ -1,23 +1,40 @@
 package com.stamina_inc.academiq_auth.service;
 
+import com.stamina_inc.academiq_auth.domain.dto.MemberDTO;
+import com.stamina_inc.academiq_auth.domain.dto.MemberPayload;
 import com.stamina_inc.academiq_auth.domain.entities.Member;
+import com.stamina_inc.academiq_auth.mapper.MemberMapper;
+import com.stamina_inc.academiq_auth.messaging.MemberProducer;
 import com.stamina_inc.academiq_auth.repository.MemberRepository;
 import com.stamina_inc.academiq_auth.security.CustomUserDetails;
 import com.stamina_inc.academiq_auth.utils.JwtUtils;
 import com.stamina_inc.academiq_auth.utils.PasswordUtils;
 import io.jsonwebtoken.Claims;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public class AuthService {
 
     private final MemberRepository memberRepository;
 
+    private final MemberMapper memberMapper;
+
     private final JwtUtils jwtUtils;
 
-    public AuthService(MemberRepository memberRepository, JwtUtils jwtUtils) {
+    private final MemberProducer memberProducer;
+
+    public AuthService(
+            MemberRepository memberRepository,
+            MemberMapper memberMapper,
+            JwtUtils jwtUtils,
+            MemberProducer memberProducer
+    ) {
         this.memberRepository = memberRepository;
+        this.memberMapper = memberMapper;
         this.jwtUtils = jwtUtils;
+        this.memberProducer = memberProducer;
     }
 
     /**
@@ -26,21 +43,24 @@ public class AuthService {
      * @param email used for registration of the student (university email).
      * @return true if the student was registered, false if the email is already in use.
      */
-    public boolean registerStudent(String email) {
+    public MemberDTO register(String email, String password) throws IllegalArgumentException {
         Optional<Member> member = memberRepository.findByEmail(email);
 
         if (member.isPresent()) {
-            return false;
+            throw new IllegalArgumentException("Email is already in use");
         }
 
         Member toRegister = new Member();
         toRegister.setEmail(email);
         toRegister.setUsername(email);
+        toRegister.setPassword(PasswordUtils.hashPassword(password));
         toRegister.setActive(false);
 
-        memberRepository.save(toRegister);
+        Member savedMember = memberRepository.save(toRegister);
 
-        return true;
+        memberProducer.publicRegisteredMember(new MemberPayload(email, savedMember.getUsername()));
+
+        return memberMapper.toDTO(savedMember);
     }
 
     /**

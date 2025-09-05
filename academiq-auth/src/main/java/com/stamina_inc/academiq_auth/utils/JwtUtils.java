@@ -9,12 +9,14 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+@Service
 public class JwtUtils {
 
     public static final long EXPIRATION_TIME = 86400000;
